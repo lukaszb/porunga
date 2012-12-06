@@ -13,7 +13,7 @@ except IOError as err:
     sys.exit(1)
 
 extra_kwargs = {'tests_require': ['mock']}
-if sys.version_info < (2, 7) or (3,) < sys.version_info < (3, 3):
+if sys.version_info < (2, 7):
     extra_kwargs['tests_require'].append('unittest2')
 if sys.version_info >= (3,):
     extra_kwargs['use_2to3'] = True

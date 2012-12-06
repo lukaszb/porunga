@@ -11,7 +11,7 @@ try:
 except ImportError:
     import unittest
 
-if sys.version_info >= (3, 3):
+if sys.version_info >= (3, 2):
     def assertItemsEqual(self, result, expected, msg=None):
         self.assertEqual(sorted(result), sorted(expected), msg=msg)
     unittest.TestCase.assertItemsEqual = assertItemsEqual
