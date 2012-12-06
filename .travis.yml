@@ -2,8 +2,8 @@ language: python
 python:
  - 2.6
  - 2.7
- - 3.3
+ - 3.2
 
-script: python setup.py install test
+script: python setup.py test install
 after_script: porunga test examples/fibs
 
