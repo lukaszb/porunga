@@ -50,11 +50,11 @@ Supported languages
 
 Currently ``porunga`` supports following languages:
 
-- `C <http://en.wikipedia.org/wiki/C_(programming_language)/>`_
+- `C <http://en.wikipedia.org/wiki/C_(programming_language)>`_
 - `C++ <http://www.cplusplus.com/>`_
 - `Objective C <http://en.wikipedia.org/wiki/Objective-C>`_
 - `Python <http://python.org>`_
-- `Ruby <http://ruby.org>`_
+- `Ruby <http://www.ruby-lang.org>`_
 - `Java <http://en.wikipedia.org/wiki/Java_(programming_language)>`_
 
 Java
