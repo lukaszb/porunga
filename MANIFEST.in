@@ -1,0 +1,6 @@
+include CHANGES
+include LICENSE
+include README.rst
+include MANIFEST.in
+include run_test_and_report.sh
+recursive-include porunga *.py

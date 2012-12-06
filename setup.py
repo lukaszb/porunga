@@ -32,6 +32,11 @@ setup(
     zip_safe=False,
     packages=find_packages(),
     scripts=[],
+    entry_points={
+        'console_scripts': [
+            'porunga = porunga:main',
+        ],
+    },
     test_suite='porunga.tests.collector',
     install_requires=install_requires,
     tests_require=['mock'],
