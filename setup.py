@@ -12,10 +12,9 @@ except IOError as err:
         "long_description (%s)\n" % readme_file)
     sys.exit(1)
 
-install_requires = ['monolith', 'termcolor']
-extra_kwargs = {}
-if sys.version_info < (2, 7):
-    install_requires.append('unittest2')
+extra_kwargs = {'tests_require': ['mock']}
+if sys.version_info < (2, 7) or (3,) < sys.version_info < (3, 3):
+    extra_kwargs['tests_require'].append('unittest2')
 if sys.version_info >= (3,):
     extra_kwargs['use_2to3'] = True
 
@@ -38,8 +37,7 @@ setup(
         ],
     },
     test_suite='porunga.tests.collector',
-    install_requires=install_requires,
-    tests_require=['mock'],
+    install_requires=['monolith', 'termcolor'],
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',
