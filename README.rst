@@ -2,6 +2,10 @@
 porunga
 =======
 
+.. image:: https://secure.travis-ci.org/lukaszb/porunga.png?branch=master
+  :target: http://travis-ci.org/lukaszb/porunga
+
+
 ``porunga`` is a tool for algorithms testing.
 
 
