@@ -1,7 +1,7 @@
 import sys
 from argparse import Namespace
 from porunga.commands.test import curdir
-from porunga.commands.test import TestCommand
+from porunga.commands.test import PorungaTestCommand
 from porunga.utils.compat import unittest
 from mock import call
 from mock import Mock
@@ -10,10 +10,10 @@ from subprocess import PIPE
 from termcolor import colored
 
 
-class TestTestCommand(unittest.TestCase):
+class TestPorungaTestCommand(unittest.TestCase):
 
     def setUp(self):
-        self.command = TestCommand()
+        self.command = PorungaTestCommand()
         self.command.namespace = Namespace(quiet=True, all=False, lang='python')
 
     # get_binary tests

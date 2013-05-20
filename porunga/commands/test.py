@@ -54,7 +54,7 @@ def curdir():
     return os.path.curdir
 
 
-class TestCommand(SingleLabelCommand):
+class PorungaTestCommand(SingleLabelCommand):
     languages = LANGUAGES
     default_language = 'python'
 

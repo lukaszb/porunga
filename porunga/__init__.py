@@ -19,7 +19,7 @@ def update_sys_path():
     dirpath = os.path.abspath(os.path.dirname(__file__))
     sys.path.insert(0, dirpath)
 
-def main():
+def get_manager():
     update_sys_path()
     from monolith.cli import ExecutionManager
     from porunga.utils.imports import import_class
@@ -28,12 +28,16 @@ def main():
 
         def get_commands_to_register(self):
             registry = {
-                'test': 'porunga.commands.test.TestCommand',
+                'test': 'porunga.commands.test.PorungaTestCommand',
             }
             commands = dict((name, import_class(path)) for name, path in
                 registry.items())
             return commands
 
-    manager = PorungaManager(['porunga'])
+    return PorungaManager(['porunga'])
+
+
+def main():
+    manager = get_manager()
     manager.execute()
 
