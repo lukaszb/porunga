@@ -24,7 +24,7 @@ def main():
     from monolith.cli import ExecutionManager
     from porunga.utils.imports import import_class
 
-    class ForfiterManager(ExecutionManager):
+    class PorungaManager(ExecutionManager):
 
         def get_commands_to_register(self):
             registry = {
@@ -34,6 +34,6 @@ def main():
                 registry.items())
             return commands
 
-    manager = ForfiterManager(['porunga'])
+    manager = PorungaManager(['porunga'])
     manager.execute()
 
