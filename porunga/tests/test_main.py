@@ -9,7 +9,7 @@ class TestManager(unittest.TestCase):
         manager = get_manager()
         commands = manager.get_commands()
 
-        self.assertIn('test', commands)
+        self.assertTrue('test' in commands)
         test_command = commands['test']
-        self.assertIsInstance(test_command, PorungaTestCommand)
+        self.assertTrue(isinstance(test_command, PorungaTestCommand))
 
