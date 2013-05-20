@@ -153,13 +153,13 @@ class PorungaTestCommand(SingleLabelCommand):
             'time':get_total_seconds(timedelta),
         }
 
-    def get_test_cases(self, dirname):
+    def get_test_cases_for_suffix(self, dirname, in_suffix, out_suffix):
         if getattr(self.namespace, 'case', False):
             fins = [self.namespace.case]
         else:
             testdir = joinpath(dirname, 'testdata')
 
-            suffix = '*.in'
+            suffix = '*.%s' % in_suffix
             if self.namespace.all:
                 fins = []
                 for topdir, dirnames, filenames in walk(testdir):
@@ -167,8 +167,12 @@ class PorungaTestCommand(SingleLabelCommand):
                                  in fnmatch.filter(filenames, suffix)])
             else:
                 fins = glob(joinpath(testdir, suffix))
-        for fin in fins:
-            yield fin, '.'.join(fin.split('.')[:-1] + ['out'])
+        return [(fin, '.'.join(fin.split('.')[:-1] + [out_suffix])) for fin in fins]
+
+    def get_test_cases(self, dirname):
+        lower = list(self.get_test_cases_for_suffix(dirname, 'in', 'out'))
+        upper = list(self.get_test_cases_for_suffix(dirname, 'IN', 'OUT'))
+        return lower + upper
 
     def compile(self, program):
         proc = Popen([program], stdout=PIPE, stderr=PIPE, shell=True)

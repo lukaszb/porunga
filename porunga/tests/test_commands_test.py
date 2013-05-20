@@ -91,23 +91,24 @@ class TestPorungaTestCommand(unittest.TestCase):
                     call('\n'),
                 ])
 
-    def test_get_test_cases(self):
+    def test_get_test_cases_for_suffix(self):
         with patch('porunga.commands.test.glob') as mglob:
             mglob.return_value = ['foobar/test01.in', 'foobar/test02.in']
-            self.assertItemsEqual(self.command.get_test_cases('foobar'), [
+            result = self.command.get_test_cases_for_suffix('foobar', 'in', 'out')
+            self.assertItemsEqual(result, [
                 ('foobar/test01.in', 'foobar/test01.out'),
                 ('foobar/test02.in', 'foobar/test02.out'),
             ])
             self.assertEqual(mglob.call_args, call('foobar/testdata/*.in'))
 
-    def test_get_test_cases_all_flag(self):
+    def test_get_test_cases_for_suffix_all_flag(self):
         with patch('porunga.commands.test.walk') as walkmock:
             walkmock.return_value = [
                 ('foobar/testdata', ['bigtests'], ['test01.in', 'test01.out', 'test02.in']),
                 ('foobar/testdata/bigtests', [], ['test-big-01.in', 'test02.out']),
             ]
             self.command.namespace.all = True
-            test_cases = list(self.command.get_test_cases('foobar/'))
+            test_cases = self.command.get_test_cases_for_suffix('foobar/', 'in', 'out')
 
             walkmock.assert_called_once_with('foobar/testdata')
             self.assertEqual([fin for fin, fout in test_cases], [
@@ -116,13 +117,24 @@ class TestPorungaTestCommand(unittest.TestCase):
                 'foobar/testdata/bigtests/test-big-01.in',
             ])
 
-    def test_get_test_cases_case_option(self):
+    def test_get_test_cases_for_suffix_case_option(self):
         with patch('porunga.commands.test.glob') as mglob:
             mglob.return_value = ['foobar/test01.in', 'foobar/test02.in']
             self.command.namespace.case = '/foo/bar/baz/some.in'
-            self.assertItemsEqual(self.command.get_test_cases('foobar'), [
+            result = self.command.get_test_cases_for_suffix('foobar', 'in', 'out')
+            self.assertItemsEqual(result, [
                 ('/foo/bar/baz/some.in',  '/foo/bar/baz/some.out')])
             self.assertFalse(mglob.called)
+
+    def test_get_test_cases(self):
+        self.command.get_test_cases_for_suffix = Mock()
+        self.command.get_test_cases_for_suffix.return_value = ['foo']
+        result = self.command.get_test_cases('foobar')
+        self.assertEqual(self.command.get_test_cases_for_suffix.call_args_list, [
+            call('foobar', 'in', 'out'),
+            call('foobar', 'IN', 'OUT'),
+        ])
+        self.assertEqual(result, ['foo', 'foo'])
 
     def test_handle_label(self):
         with patch('porunga.commands.test.Popen') as PopenMock:
