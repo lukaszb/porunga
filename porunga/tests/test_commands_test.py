@@ -1,13 +1,18 @@
+import os
+import shutil
 import sys
+import tempfile
 from argparse import Namespace
 from porunga.commands.test import curdir
 from porunga.commands.test import PorungaTestCommand
 from porunga.utils.compat import unittest
+from porunga.utils.paths import abspath
 from mock import call
 from mock import Mock
 from mock import patch
 from subprocess import PIPE
 from termcolor import colored
+
 
 
 class TestPorungaTestCommand(unittest.TestCase):
@@ -94,10 +99,10 @@ class TestPorungaTestCommand(unittest.TestCase):
     def test_get_test_cases_for_suffix(self):
         with patch('porunga.commands.test.glob') as mglob:
             mglob.return_value = ['foobar/test01.in', 'foobar/test02.in']
-            result = self.command.get_test_cases_for_suffix('foobar', 'in', 'out')
-            self.assertItemsEqual(result, [
-                ('foobar/test01.in', 'foobar/test01.out'),
-                ('foobar/test02.in', 'foobar/test02.out'),
+            cases = self.command.get_test_cases_for_suffix('foobar', 'in')
+            self.assertItemsEqual(cases, [
+                'foobar/test01.in',
+                'foobar/test02.in',
             ])
             self.assertEqual(mglob.call_args, call('foobar/testdata/*.in'))
 
@@ -108,33 +113,46 @@ class TestPorungaTestCommand(unittest.TestCase):
                 ('foobar/testdata/bigtests', [], ['test-big-01.in', 'test02.out']),
             ]
             self.command.namespace.all = True
-            test_cases = self.command.get_test_cases_for_suffix('foobar/', 'in', 'out')
+            test_cases = self.command.get_test_cases_for_suffix('foobar/', 'in')
 
             walkmock.assert_called_once_with('foobar/testdata')
-            self.assertEqual([fin for fin, fout in test_cases], [
+            self.assertEqual(test_cases, [
                 'foobar/testdata/test01.in',
                 'foobar/testdata/test02.in',
                 'foobar/testdata/bigtests/test-big-01.in',
             ])
 
-    def test_get_test_cases_for_suffix_case_option(self):
-        with patch('porunga.commands.test.glob') as mglob:
-            mglob.return_value = ['foobar/test01.in', 'foobar/test02.in']
-            self.command.namespace.case = '/foo/bar/baz/some.in'
-            result = self.command.get_test_cases_for_suffix('foobar', 'in', 'out')
-            self.assertItemsEqual(result, [
-                ('/foo/bar/baz/some.in',  '/foo/bar/baz/some.out')])
-            self.assertFalse(mglob.called)
+    def test_get_test_cases_with_case_option(self):
+        self.command.namespace.case = '/foo/some.in'
+        self.command.get_fout_name = Mock(return_value='/foo/some.out')
+        cases = self.command.get_test_cases('foobar')
+        self.assertEqual(cases, [('/foo/some.in', '/foo/some.out')])
 
     def test_get_test_cases(self):
         self.command.get_test_cases_for_suffix = Mock()
-        self.command.get_test_cases_for_suffix.return_value = ['foo']
+        self.command.get_test_cases_for_suffix.return_value = ['foo.in']
+        self.command.get_fout_name = Mock(return_value='foo.out')
         result = self.command.get_test_cases('foobar')
         self.assertEqual(self.command.get_test_cases_for_suffix.call_args_list, [
-            call('foobar', 'in', 'out'),
-            call('foobar', 'IN', 'OUT'),
+            call('foobar', 'in'),
+            call('foobar', 'IN'),
         ])
-        self.assertEqual(result, ['foo', 'foo'])
+        self.assertEqual(result, [('foo.in', 'foo.out')])
+
+    def test_get_test_cases_dupes_if_case_given(self):
+        tempdir = tempfile.mkdtemp()
+        testdir = abspath(tempdir, 'testdata')
+        os.makedirs(testdir)
+        fin = abspath(testdir, 'foo.in')
+        fout = abspath(testdir, 'foo.out')
+        open(fin, 'w')
+        open(fout, 'w')
+        self.command.namespace.case = fin
+        cases = self.command.get_test_cases(tempdir)
+        try:
+            self.assertEqual(cases, [(fin, fout)])
+        finally:
+            shutil.rmtree(tempdir)
 
     def test_handle_label(self):
         with patch('porunga.commands.test.Popen') as PopenMock:

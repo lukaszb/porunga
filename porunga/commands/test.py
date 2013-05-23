@@ -7,13 +7,13 @@ from os import walk
 from datetime import datetime
 from glob import glob
 from porunga.utils.backports import get_total_seconds
+from porunga.utils.paths import joinpath
+from porunga.utils.paths import abspath
 from monolith.cli import arg
 from monolith.cli import SingleLabelCommand
 from subprocess import Popen, PIPE
 from termcolor import colored
 
-joinpath = lambda *p: os.path.join(*p)
-abspath = lambda *p: os.path.abspath(joinpath(*p))
 
 LANGUAGES = {
     'python': {
@@ -87,6 +87,7 @@ class PorungaTestCommand(SingleLabelCommand):
         time = 0
         total = 0
         fails = 0
+        #print(self.get_test_cases(dirname))
         for fin, fout in self.get_test_cases(dirname):
             total += 1
             info = self.test(dirname, binary, fin, fout)
@@ -153,26 +154,38 @@ class PorungaTestCommand(SingleLabelCommand):
             'time':get_total_seconds(timedelta),
         }
 
-    def get_test_cases_for_suffix(self, dirname, in_suffix, out_suffix):
+    def get_test_cases_for_suffix(self, dirname, in_suffix):
+        testdir = joinpath(dirname, 'testdata')
+
+        suffix = '*.%s' % in_suffix
+        if self.namespace.all:
+            fins = []
+            for topdir, dirnames, filenames in walk(testdir):
+                fins.extend([joinpath(topdir, filename) for filename
+                                in fnmatch.filter(filenames, suffix)])
+        else:
+            fins = glob(joinpath(testdir, suffix))
+        return fins
+
+    def get_fout_name(self, fin):
+        splitted = fin.split('.')
+        if not splitted:
+            return None
+        suffix = splitted[-1]
+        if suffix == 'in':
+            return '.'.join(splitted[:-1] + ['out'])
+        elif suffix == 'IN':
+            return '.'.join(splitted[:-1] + ['OUT'])
+
+    def get_test_cases(self, dirname):
         if getattr(self.namespace, 'case', False):
             fins = [self.namespace.case]
         else:
-            testdir = joinpath(dirname, 'testdata')
-
-            suffix = '*.%s' % in_suffix
-            if self.namespace.all:
-                fins = []
-                for topdir, dirnames, filenames in walk(testdir):
-                    fins.extend([joinpath(topdir, filename) for filename
-                                 in fnmatch.filter(filenames, suffix)])
-            else:
-                fins = glob(joinpath(testdir, suffix))
-        return [(fin, '.'.join(fin.split('.')[:-1] + [out_suffix])) for fin in fins]
-
-    def get_test_cases(self, dirname):
-        lower = list(self.get_test_cases_for_suffix(dirname, 'in', 'out'))
-        upper = list(self.get_test_cases_for_suffix(dirname, 'IN', 'OUT'))
-        return lower + upper
+            lower = list(self.get_test_cases_for_suffix(dirname, 'in'))
+            upper = list(self.get_test_cases_for_suffix(dirname, 'IN'))
+            fins = set(lower + upper)
+        return [(fin, self.get_fout_name(fin)) for fin in fins
+                if self.get_fout_name(fin)]
 
     def compile(self, program):
         proc = Popen([program], stdout=PIPE, stderr=PIPE, shell=True)
