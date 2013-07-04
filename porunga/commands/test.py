@@ -67,7 +67,7 @@ class PorungaTestCommand(SingleLabelCommand):
         arg('-v', '--verbose', default=False, action='store_true'),
         arg('-q', '--quiet', default=False, action='store_true'),
         arg('-c', '--case', type=str),
-        arg('-t', '--timeout', type=float, default=3.0),
+        arg('-t', '--timeout', type=float, default=0.0),
     ]
 
     def handle_label(self, label, namespace):
@@ -121,12 +121,28 @@ class PorungaTestCommand(SingleLabelCommand):
             self.exit("Wrong language specified")
 
     def run_test_command(self, cmd):
-        process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = process.communicate()
-        return {
-            'output': out.strip(),
-            'returncode': process.returncode,
-        }
+        if not self.namespace.timeout:
+            process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+            out, err = process.communicate()
+            return {
+                'output': out.strip(),
+                'returncode': process.returncode,
+                'timeouted': False,
+            }
+        else:
+            from porunga import procme
+            command = procme.Command(cmd, shell=True, timeout=self.namespace.timeout)
+            try:
+                command.run()
+                timeouted = False
+            except procme.TimeoutExceeded:
+                timeouted = True
+            return {
+                'output': command.output.strip(),
+                'returncode': command.returncode,
+                'timeouted': timeouted,
+            }
+
 
     def test(self, dirname, binary, fin, fout):
         self.info("Testing %s ... " % fin, newline=False)
@@ -135,6 +151,7 @@ class PorungaTestCommand(SingleLabelCommand):
         runinfo = self.run_test_command(cmd)
         output = runinfo['output']
         returncode = runinfo['returncode']
+        timeouted = runinfo['timeouted']
 
         timedelta = datetime.now() - start
 
@@ -151,7 +168,9 @@ class PorungaTestCommand(SingleLabelCommand):
         else:
             self.error_continuation('Fail')
             if self.namespace.verbose:
-                if returncode != 0:
+                if timeouted:
+                    msg = "    Program timeouted after %.1fs" % self.namespace.timeout
+                elif returncode != 0:
                     msg = "    Program returned with code %d:\n%s" % (
                         returncode, output)
                 elif not fout_read:

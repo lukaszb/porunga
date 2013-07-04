@@ -18,8 +18,9 @@ from termcolor import colored
 class TestPorungaTestCommand(unittest.TestCase):
 
     def setUp(self):
+        namespace = Namespace(quiet=True, all=False, lang='python', timeout=0)
         self.command = PorungaTestCommand()
-        self.command.namespace = Namespace(quiet=True, all=False, lang='python')
+        self.command.namespace = namespace
         self.command.namespace.verbose = True
 
     # get_binary tests
