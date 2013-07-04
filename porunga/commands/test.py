@@ -120,13 +120,22 @@ class PorungaTestCommand(SingleLabelCommand):
         else:
             self.exit("Wrong language specified")
 
+    def run_test_command(self, cmd):
+        process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
+        out, err = process.communicate()
+        return {
+            'output': out.strip(),
+            'returncode': process.returncode,
+        }
+
     def test(self, dirname, binary, fin, fout):
         self.info("Testing %s ... " % fin, newline=False)
         start = datetime.now()
-        prog = 'cat %s | %s' % (fin, binary)
-        proc = Popen(prog, stdout=PIPE, stderr=PIPE, shell=True)
-        out, err = proc.communicate()
-        result = out.strip()
+        cmd = 'cat %s | %s' % (fin, binary)
+        runinfo = self.run_test_command(cmd)
+        output = runinfo['output']
+        returncode = runinfo['returncode']
+
         timedelta = datetime.now() - start
 
         try:
@@ -136,20 +145,20 @@ class PorungaTestCommand(SingleLabelCommand):
             expected = '[File could not be read]'
             fout_read = False
 
-        success = result == expected and proc.returncode == 0 and fout_read
+        success = output == expected and returncode == 0 and fout_read
         if success:
             self.success_continuation('OK [%.3f]s' % get_total_seconds(timedelta))
         else:
             self.error_continuation('Fail')
             if self.namespace.verbose:
-                if proc.returncode != 0:
+                if returncode != 0:
                     msg = "    Program returned with code %d:\n%s" % (
-                        proc.returncode, err)
+                        returncode, output)
                 elif not fout_read:
                     msg = "    out file could not be read (%r)" % fout
                 else:
                     msg = "    Result was:\n%s\n but expected:\n%s\n" % (
-                        result, expected)
+                        output, expected)
                 self.error_continuation(msg)
 
         return {
