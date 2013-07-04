@@ -44,6 +44,12 @@ See help for more options (you can see supported languages there too)::
 
     $ porunga test -h
 
+If we want to set time constraints for tests we can use ``--timeout`` switch. In
+example, if we need tests to run below 2.5 seconds we can run::
+
+    $ porunga test --timeout 2.5
+
+Please note that very low timeout value is not supported. Moreover, 
 
 Supported languages
 -------------------
