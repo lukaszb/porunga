@@ -23,8 +23,6 @@ class TestPorungaTestCommand(unittest.TestCase):
         self.command.namespace = namespace
         self.command.namespace.verbose = True
 
-    # get_binary tests
-
     def test_get_binary(self):
         self.assertEqual(self.command.get_binary('foobar/', 'python'),
             'python foobar/foobar.py')

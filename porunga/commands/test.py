@@ -67,7 +67,9 @@ class PorungaTestCommand(SingleLabelCommand):
         arg('-v', '--verbose', default=False, action='store_true'),
         arg('-q', '--quiet', default=False, action='store_true'),
         arg('-c', '--case', type=str),
-        arg('-t', '--timeout', type=float, default=0.0),
+        arg('-t', '--timeout', type=float, default=0.0,
+            help='Fail test if it is run for more than given value (in '
+                 'seconds). By default there is no timeout'),
     ]
 
     def handle_label(self, label, namespace):
