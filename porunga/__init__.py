@@ -5,7 +5,7 @@ import os
 import sys
 
 
-VERSION = (0, 9, 2)
+VERSION = (0, 9, 3, 'dev')
 
 __version__ = '.'.join((str(each) for each in VERSION[:4]))
 
@@ -13,7 +13,10 @@ def get_version():
     """
     Returns shorter version (digit parts only) as string.
     """
-    return '.'.join((str(each) for each in VERSION[:4]))
+    version = '.'.join((str(each) for each in VERSION[:3]))
+    if len(VERSION) > 3:
+        version += VERSION[3]
+    return version
 
 def update_sys_path():
     dirpath = os.path.abspath(os.path.dirname(__file__))

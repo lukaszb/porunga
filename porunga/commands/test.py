@@ -87,7 +87,6 @@ class PorungaTestCommand(SingleLabelCommand):
         time = 0
         total = 0
         fails = 0
-        #print(self.get_test_cases(dirname))
         for fin, fout in self.get_test_cases(dirname):
             total += 1
             info = self.test(dirname, binary, fin, fout)
@@ -130,12 +129,14 @@ class PorungaTestCommand(SingleLabelCommand):
         result = out.strip()
         timedelta = datetime.now() - start
 
-        prog2 = 'cat %s' % fout
-        proc2 = Popen(prog2, stdout=PIPE, stderr=PIPE, shell=True)
-        out2, err2 = proc2.communicate()
-        expected = out2.strip()
+        try:
+            expected = open(fout).read().strip()
+            fout_read = True
+        except IOError:
+            expected = '[File could not be read]'
+            fout_read = False
 
-        success = result == expected and proc.returncode == 0 and proc2.returncode == 0
+        success = result == expected and proc.returncode == 0 and fout_read
         if success:
             self.success_continuation('OK [%.3f]s' % get_total_seconds(timedelta))
         else:
@@ -144,6 +145,8 @@ class PorungaTestCommand(SingleLabelCommand):
                 if proc.returncode != 0:
                     msg = "    Program returned with code %d:\n%s" % (
                         proc.returncode, err)
+                elif not fout_read:
+                    msg = "    out file could not be read (%r)" % fout
                 else:
                     msg = "    Result was:\n%s\n but expected:\n%s\n" % (
                         result, expected)
@@ -151,7 +154,7 @@ class PorungaTestCommand(SingleLabelCommand):
 
         return {
             'success': success,
-            'time':get_total_seconds(timedelta),
+            'time': get_total_seconds(timedelta),
         }
 
     def get_test_cases_for_suffix(self, dirname, in_suffix):

@@ -20,6 +20,7 @@ class TestPorungaTestCommand(unittest.TestCase):
     def setUp(self):
         self.command = PorungaTestCommand()
         self.command.namespace = Namespace(quiet=True, all=False, lang='python')
+        self.command.namespace.verbose = True
 
     # get_binary tests
 
@@ -154,7 +155,7 @@ class TestPorungaTestCommand(unittest.TestCase):
         finally:
             shutil.rmtree(tempdir)
 
-    def test_handle_label(self):
+    def test_handle_label_error(self):
         with patch('porunga.commands.test.Popen') as PopenMock:
             self.command.get_test_cases = Mock(return_value=[
                 ('test1.in', 'test1.out'), ('test2.in', 'test2.out')])
@@ -164,14 +165,14 @@ class TestPorungaTestCommand(unittest.TestCase):
 
             self.command.get_binary = Mock()
             self.command.info = Mock()
-            self.command.success = Mock()
+            self.command.error = Mock()
 
             self.command.handle_label('foobar', self.command.namespace)
 
             self.command.get_binary.assert_called_once_with('foobar', 'python')
             self.command.get_test_cases.assert_called_once_with('foobar')
             self.assertTrue(self.command.info.called)
-            self.assertTrue(self.command.success.called)
+            self.assertTrue(self.command.error.called) # out file does not exist
 
             # check if no label was given
             with patch('porunga.commands.test.curdir') as curdirmock:
@@ -182,19 +183,21 @@ class TestPorungaTestCommand(unittest.TestCase):
 
     def test_test_program(self):
         with patch('porunga.commands.test.Popen') as PopenMock:
-            mock = PopenMock.return_value = Mock()
-            mock.communicate = lambda: ('out', 'err')
-            mock.returncode = 0
-            info = self.command.test('foobar', 'foobar/foobar.out', 'fin', 'fout')
+            with tempfile.NamedTemporaryFile() as fout:
+                fout.write(b'out')
+                fout.flush()
+                mock = PopenMock.return_value = Mock()
+                mock.communicate = lambda: ('out', '')
+                mock.returncode = 0
+                info = self.command.test('foobar', 'foobar/foobar.out', 'fin', fout.name)
 
-            self.assertEqual(PopenMock.call_args_list, [
-                call('cat fin | foobar/foobar.out', stdout=PIPE, stderr=PIPE,
-                     shell=True),
-                call('cat fout', stdout=PIPE, stderr=PIPE, shell=True),
-            ])
+                self.assertEqual(PopenMock.call_args_list, [
+                    call('cat fin | foobar/foobar.out', stdout=PIPE, stderr=PIPE,
+                        shell=True),
+                ])
 
-            self.assertTrue(info['success'])
-            self.assertIn('time', info)
+                self.assertTrue(info['success'])
+                self.assertIn('time', info)
 
     def test_test_program_fails(self):
         with patch('porunga.commands.test.Popen') as PopenMock:
@@ -208,7 +211,6 @@ class TestPorungaTestCommand(unittest.TestCase):
             self.assertEqual(PopenMock.call_args_list, [
                 call('cat fin | foobar/foobar.out', stdout=PIPE, stderr=PIPE,
                      shell=True),
-                call('cat fout', stdout=PIPE, stderr=PIPE, shell=True),
             ])
 
             self.assertFalse(info['success'])
