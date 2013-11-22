@@ -5,7 +5,7 @@ import os
 import sys
 
 
-VERSION = (0, 9, 3)
+VERSION = (0, 9, 4, 'dev')
 
 __version__ = '.'.join((str(each) for each in VERSION[:4]))
 
